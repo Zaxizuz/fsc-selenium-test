@@ -1,5 +1,6 @@
 package com.fsc.base;
 
+import com.fsc.utils.ConfigReader;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -23,11 +24,16 @@ public class BaseTest {
         options.addArguments("--disable-notifications");
         options.addArguments("--disable-popup-blocking");
 
+        // Add headless mode if configured
+        if (ConfigReader.isHeadless()) {
+            options.addArguments("--headless");
+        }
+
         driver = new ChromeDriver(options);
 
-        // Implicit wait for dynamic Salesforce elements
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+        // Use timeouts from config.properties
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(ConfigReader.getImplicitWait()));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(ConfigReader.getPageLoadTimeout()));
     }
 
     @AfterMethod
