@@ -464,15 +464,32 @@ gh repo view               # View repository details
 
 ---
 
+## Session 2: ConfigReader & Best Practices (January 13, 2026)
+
+### ConfigReader Implementation
+- Created `ConfigReader.java` utility to read config.properties
+- Refactored tests to use centralized configuration
+- **Key Learning**: Config files vs @Parameters - chose config approach for simplicity
+
+### Code Quality Improvements
+- Replaced `Thread.sleep()` with `WebDriverWait` - **critical best practice**
+- **Why Thread.sleep is bad**: Wastes time, unreliable, blocks thread
+- **Proper approach**: `wait.until()` with dynamic conditions
+
+### Understanding Imports
+- **Standard Selenium**: `WebDriverWait`, `ExpectedConditions` (universal, reusable)
+- **Custom code**: `SalesforceLoginPage`, locators like `By.id("error")` (project-specific)
+- **Key insight**: Selenium methods are the same everywhere; only locators change per website
+
 ## Project Statistics
 
-- **Files Created**: 7
-- **Lines of Code**: ~410
+- **Files Created**: 9 (+ConfigReader, +Quick Reference, +Learning Notes)
+- **Lines of Code**: ~850
 - **Dependencies**: 5 (Selenium, TestNG, WebDriverManager, SLF4J)
 - **Test Cases**: 4 (login scenarios)
-- **Time Spent**: ~2 hours
-- **GitHub Commits**: 1
+- **GitHub Commits**: 5
+- **Documentation**: 2 comprehensive guides (Learning Notes, Quick Reference)
 
 ---
 
-*This learning note will be updated as the project progresses.*
+*Updated: January 13, 2026*

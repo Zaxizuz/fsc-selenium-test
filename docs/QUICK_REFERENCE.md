@@ -307,9 +307,12 @@ WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id("submit")));
 button.click();
 
-// ❌ BAD: Use Thread.sleep() (never do this!)
-Thread.sleep(5000);  // Wastes time, unreliable
+// ❌ BAD: Use Thread.sleep() (NEVER do this!)
+Thread.sleep(5000);  // Always waits full time, wastes time, unreliable, blocks thread
 driver.findElement(By.id("submit")).click();
+
+// ✅ GOOD: Wait for URL change (e.g., after login)
+wait.until(driver -> driver.getCurrentUrl().contains("dashboard"));
 
 // ✅ GOOD: Wait for loading spinner to disappear
 wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("loading-spinner")));
@@ -757,4 +760,17 @@ public void highlightElement(WebElement element) {
 
 ---
 
-*This quick reference will be updated with new patterns and techniques as we encounter them.*
+## Understanding Standard vs Custom Code
+
+**Reusable Across All Projects** (Standard Selenium):
+- `WebDriverWait`, `ExpectedConditions`, `By` methods - Universal Selenium classes/methods
+- Import from: `org.openqa.selenium.*` packages
+
+**Project-Specific** (Your Custom Code):
+- Locators like `By.id("error")` - The "error" ID is specific to your website
+- Page classes like `SalesforceLoginPage` - Built for your application
+- Pattern is universal, locator values change per website
+
+---
+
+*Updated: January 13, 2026*
