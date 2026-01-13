@@ -3,9 +3,13 @@ package com.fsc.tests;
 import com.fsc.base.BaseTest;
 import com.fsc.pages.SalesforceLoginPage;
 import com.fsc.utils.ConfigReader;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.time.Duration;
 
 public class SalesforceLoginTest extends BaseTest {
     private SalesforceLoginPage loginPage;
@@ -23,14 +27,14 @@ public class SalesforceLoginTest extends BaseTest {
 
         loginPage.login(username, password);
 
-        // Wait a bit for login to complete
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Wait for successful login - URL should change to contain 'lightning' or 'home'
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(ConfigReader.getExplicitWait()));
+        wait.until(driver -> {
+            String url = driver.getCurrentUrl();
+            return url.contains("lightning") || url.contains("home");
+        });
 
-        // Assert successful login - check if URL contains 'lightning' or 'home'
+        // Assert successful login
         String currentUrl = driver.getCurrentUrl();
         Assert.assertTrue(currentUrl.contains("lightning") || currentUrl.contains("home"),
             "Login failed - URL does not contain 'lightning' or 'home'. Current URL: " + currentUrl);
