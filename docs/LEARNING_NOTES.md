@@ -223,32 +223,42 @@ public void testLogin() {
 
 ---
 
-### 7. Maven Installation and Setup
+### 7. ChromeOptions vs Window Handler
 
-**Installation Steps on macOS**:
-```bash
-# Using Homebrew
-brew install maven
+**ChromeOptions** (Configure BEFORE browser starts):
+- Set during driver creation: `new ChromeDriver(options)`
+- For: maximize, headless, preferences
+- **Better for**: Initial setup, headless mode, browser preferences
 
-# Verify installation
-mvn -version
-```
+**Window Handler** (Control AFTER browser starts):
+- Control existing window: `driver.manage().window()`
+- For: resize, reposition, dynamic changes
+- **Better for**: Responsive testing, dynamic sizing
 
-**Maven Location**: `/opt/homebrew/bin/mvn`
-
-**Important Note**: Maven was already installed but not in PATH initially
+**Headless Mode Purpose**:
+- **Main reason**: CI/CD servers have no displays (Jenkins, GitHub Actions)
+- Secondary: 10-15% faster, less memory
+- Use cases: Docker, remote servers, parallel execution
 
 ---
 
-### 8. Troubleshooting and Debugging
+### 8. ExpectedConditions Methods
 
-**Issues Encountered and Resolved**:
+**visibilityOfElementLocated(By)** vs **visibilityOf(WebElement)**:
+
+| Method | Input | Use Case |
+|--------|-------|----------|
+| `visibilityOfElementLocated(By)` | By locator | Most common - finds + waits |
+| `visibilityOf(WebElement)` | WebElement | Already have element reference |
+
+**Rule**: If method name has `*Located`, it takes `By`. Otherwise, takes `WebElement`.
+
+### 9. Troubleshooting and Debugging
 
 #### Issue 1: "mvn command not found"
-- **Problem**: Maven not in PATH
 - **Solution**: Use full path `/opt/homebrew/bin/mvn` or add to PATH
 
-#### Issue 2: Compilation Error - TestNG annotations not found
+#### Issue 2: TestNG annotations not found
 - **Problem**: `BaseTest.java` was in `src/main/java` but TestNG has `<scope>test</scope>`
 - **Root Cause**: TestNG is only available for test code, not main code
 - **Solution**: Moved `BaseTest.java` to `src/test/java/com/fsc/base/`
@@ -277,58 +287,37 @@ mvn -version
 
 ---
 
-### 9. Git and GitHub Setup
+### 10. Package Imports: Standard vs Custom
 
-**Git Initialization**:
-```bash
-git init
-git branch -m main          # Rename to main branch
-git add .
-git commit -m "Initial commit"
-```
+**Standard Selenium** (Reusable everywhere):
+- `WebDriverWait`, `ExpectedConditions`, `By` - from `org.openqa.selenium.*`
+- Universal across all Selenium projects
 
-**GitHub CLI Installation**:
-```bash
-brew install gh
-gh auth login               # Interactive authentication
-```
+**Custom/Project-Specific**:
+- `SalesforceLoginPage` - Your page class
+- Locator values like `By.id("error")` - Website-specific
 
-**Repository Creation**:
-```bash
-gh repo create fsc-selenium-test --public --source=. \
-  --description "Salesforce Selenium automation testing project" \
-  --push
-```
+**Key Insight**: Selenium methods are universal; only locator values change per website.
 
-**Repository URL**: https://github.com/Zaxizuz/fsc-selenium-test
-
-**Important Files Added**:
-- `.gitignore` - Prevents committing sensitive data (credentials, build files)
+**Reusing Code**:
+- Copy files OR create shared JAR library
+- For production: Package as Maven artifact
 
 ---
 
-### 10. WebDriverManager - Automatic Driver Management
+### 11. Config Files vs TestNG @Parameters
 
-**What is WebDriverManager?**
-- Library that automatically downloads and manages browser drivers
-- No need to manually download ChromeDriver, GeckoDriver, etc.
+**Config File Approach** (Chosen for this project):
+- Simple: All settings in one `.properties` file
+- Easy to gitignore credentials
+- Best for: Single environment, learning, simple setup
 
-**Usage in BaseTest**:
-```java
-@BeforeMethod
-public void setUp() {
-    // Automatically downloads correct ChromeDriver version
-    WebDriverManager.chromedriver().setup();
+**@Parameters Approach**:
+- Data-driven: Same test, different data
+- TestNG XML configuration
+- Best for: Multiple users, test scenarios, parallel execution
 
-    driver = new ChromeDriver();
-}
-```
-
-**Benefits**:
-- No manual driver downloads
-- Automatically matches browser version
-- Works across different operating systems
-- Handles driver updates automatically
+**Decision**: Used config.properties for simplicity; can add @Parameters later for data-driven testing
 
 ---
 
@@ -464,22 +453,27 @@ gh repo view               # View repository details
 
 ---
 
-## Session 2: ConfigReader & Best Practices (January 13, 2026)
+## Session 2: Deep Dive - Config, Waits & Browser Control (January 13, 2026)
 
-### ConfigReader Implementation
-- Created `ConfigReader.java` utility to read config.properties
-- Refactored tests to use centralized configuration
-- **Key Learning**: Config files vs @Parameters - chose config approach for simplicity
+### ConfigReader & Configuration Strategy
+- Created `ConfigReader.java` for centralized config management
+- **Decision**: Config files over @Parameters for simplicity
+- Can evolve to @Parameters for data-driven testing later
 
-### Code Quality Improvements
-- Replaced `Thread.sleep()` with `WebDriverWait` - **critical best practice**
-- **Why Thread.sleep is bad**: Wastes time, unreliable, blocks thread
-- **Proper approach**: `wait.until()` with dynamic conditions
+### Critical Best Practice: Waits
+- **Fixed**: Replaced `Thread.sleep()` with `WebDriverWait`
+- **Why Thread.sleep fails**: Always waits full time, unreliable, blocks thread
+- **Proper approach**: `wait.until()` with dynamic conditions (waits only as long as needed)
 
-### Understanding Imports
-- **Standard Selenium**: `WebDriverWait`, `ExpectedConditions` (universal, reusable)
-- **Custom code**: `SalesforceLoginPage`, locators like `By.id("error")` (project-specific)
-- **Key insight**: Selenium methods are the same everywhere; only locators change per website
+### Browser Control Strategies
+- **ChromeOptions**: Configure before browser starts (headless, maximize, preferences)
+- **Window Handler**: Control after browser starts (resize, reposition)
+- **Headless mode**: Essential for CI/CD (servers have no displays), 10-15% faster
+
+### Understanding Code Reusability
+- **Standard Selenium**: `WebDriverWait`, `ExpectedConditions` - universal across projects
+- **Project-specific**: Page classes, locator values - change per website
+- **ExpectedConditions methods**: `*Located(By)` vs without (WebElement)
 
 ## Project Statistics
 

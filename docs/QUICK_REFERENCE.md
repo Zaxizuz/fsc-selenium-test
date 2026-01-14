@@ -229,16 +229,17 @@ wait.until(ExpectedConditions.numberOfWindowsToBe(2));
 
 ### Common ExpectedConditions
 
-| Condition | Description |
-|-----------|-------------|
-| `visibilityOfElementLocated(By)` | Element is visible (displayed and has height/width) |
-| `presenceOfElementLocated(By)` | Element is present in DOM |
-| `elementToBeClickable(By)` | Element is visible and enabled |
-| `invisibilityOfElementLocated(By)` | Element is not visible or not present |
-| `textToBePresentInElement(WebElement, String)` | Text is present in element |
-| `attributeContains(By, String, String)` | Attribute contains value |
-| `elementSelectionStateToBe(WebElement, boolean)` | Element selection state matches |
-| `numberOfElementsToBe(By, int)` | Number of elements matches |
+| Condition | Input Type | Description |
+|-----------|------------|-------------|
+| `visibilityOfElementLocated(By)` | By | Find + wait for visible |
+| `visibilityOf(WebElement)` | WebElement | Wait for already-found element |
+| `presenceOfElementLocated(By)` | By | Find + wait in DOM |
+| `elementToBeClickable(By)` | By | Find + wait clickable |
+| `invisibilityOfElementLocated(By)` | By | Wait for hidden/removed |
+| `urlContains(String)` | String | Wait for URL change |
+| `titleContains(String)` | String | Wait for title |
+
+**Rule**: `*Located` methods take `By`, others take `WebElement`
 
 ### Custom Wait Conditions
 
@@ -675,35 +676,27 @@ driver.findElement(By.id("element-in-iframe")).click();
 driver.switchTo().defaultContent();
 ```
 
-### 7. Handle New Window/Tab
+### 7. Browser Options vs Window Management
 
+**ChromeOptions** (Before browser starts):
 ```java
-// Get current window handle
-String mainWindow = driver.getWindowHandle();
-
-// Click link that opens new window
-driver.findElement(By.linkText("Open New Tab")).click();
-
-// Wait for new window
-WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-wait.until(ExpectedConditions.numberOfWindowsToBe(2));
-
-// Switch to new window
-Set<String> allWindows = driver.getWindowHandles();
-for (String window : allWindows) {
-    if (!window.equals(mainWindow)) {
-        driver.switchTo().window(window);
-        break;
-    }
-}
-
-// Do something in new window
-System.out.println(driver.getTitle());
-
-// Close new window and switch back
-driver.close();
-driver.switchTo().window(mainWindow);
+ChromeOptions options = new ChromeOptions();
+options.addArguments("--start-maximized");  // Opens maximized
+options.addArguments("--headless");         // No GUI (for CI/CD)
+driver = new ChromeDriver(options);
 ```
+
+**Window Handler** (After browser starts):
+```java
+driver.manage().window().maximize();           // Maximize
+driver.manage().window().setSize(new Dimension(1920, 1080));
+driver.manage().window().setPosition(new Point(0, 0));
+```
+
+**When to use ChromeOptions**: Headless, maximize, fixed config
+**When to use Window Handler**: Dynamic sizing, responsive testing
+
+**Headless Mode**: Essential for CI/CD servers (no displays), Docker, remote servers
 
 ---
 
