@@ -475,15 +475,191 @@ gh repo view               # View repository details
 - **Project-specific**: Page classes, locator values - change per website
 - **ExpectedConditions methods**: `*Located(By)` vs without (WebElement)
 
+## Session 3: Advanced Selenium & Test Reporting (January 15, 2026)
+
+### JavascriptExecutor for Salesforce
+**Why Needed**: Salesforce Lightning has overlays, Shadow DOM, and dynamic components
+
+**Created**: `JavaScriptUtil.java` with 15+ utility methods:
+- `clickElement()` - Bypass overlays/spinners blocking clicks
+- `scrollIntoView()` - Handle lazy loading
+- `getShadowRoot()` - Access Shadow DOM elements
+- `setValueAndTriggerChange()` - Trigger Lightning component events
+- `isSpinnerPresent()` - Wait for loading completion
+
+**Key Insight**: JavascriptExecutor bypasses browser behavior (doesn't simulate users). Use for:
+- ✅ Element blocked by overlay
+- ✅ Shadow DOM access
+- ✅ Scroll management
+- ❌ Avoid when testing user interactions
+
+### Actions Class for Complex Interactions
+**Purpose**: Simulate real user behavior (mouse, keyboard)
+
+**Created**: `ActionsUtil.java` with 20+ utility methods:
+- `hoverOver()` - Reveal menus (most common in Salesforce!)
+- `dragAndDrop()` - Reorder columns
+- `doubleClick()` - Inline editing
+- `rightClick()` - Context menus
+- `pressTab()`, `selectAll()`, `copy()`, `paste()` - Keyboard navigation (OS-aware)
+
+**Important**: Always call `.perform()` to execute actions! `.build()` is optional (auto-called by `.perform()`)
+
+**When to Use Actions vs JavaScript**:
+- **Actions**: Hover menus, drag-drop, keyboard shortcuts (simulates users)
+- **JavaScript**: Bypass overlays, Shadow DOM (direct manipulation)
+- **Regular Selenium**: Simple click/type (standard approach)
+
+### Exception Handling
+**Created**: `EXCEPTION_HANDLING_GUIDE.md` covering:
+- Top 10 Selenium exceptions
+- Root causes and prevention strategies
+- **Key Principle**: Prevent exceptions (proper waits, robust locators) > Catch them
+
+**Most Common**:
+1. `NoSuchElementException` - Element not found (fix: wait for element)
+2. `ElementNotInteractableException` - Element not clickable (fix: wait for clickable, or use JS)
+3. `StaleElementReferenceException` - Element changed (fix: re-find element)
+4. `TimeoutException` - Wait timeout (fix: increase wait time, check condition)
+
+### Test Reporting with Extent Reports
+**Added**: Extent Reports 5.1.1 for comprehensive HTML test reports
+
+**Created**:
+- `ExtentReportManager.java` - Report lifecycle management
+- `TestListener.java` - Automatic test logging via TestNG hooks
+- Updated `testng.xml` with listener configuration
+
+**Features**:
+- Timestamped HTML reports in `test-output/extent-reports/`
+- Automatic screenshot capture on test failure
+- Color-coded results (green=pass, red=fail, yellow=skip)
+- System information (browser, OS, Java version, Salesforce URL)
+- No manual logging needed - fully automatic!
+
+### Salesforce Automation Detection & Bypass
+**Problem**: Salesforce detects Selenium and requires email verification codes
+
+**Root Cause**: Salesforce checks:
+- `navigator.webdriver === true` (set by Selenium)
+- Browser fingerprinting (missing plugins, automation signals)
+- Behavioral patterns (typing speed, mouse movements)
+
+**Solutions Implemented**:
+1. **Anti-detection ChromeOptions**:
+   ```java
+   options.addArguments("--disable-blink-features=AutomationControlled");
+   options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+   ```
+2. **Hide webdriver flag**:
+   ```java
+   ((JavascriptExecutor) driver).executeScript(
+       "Object.defineProperty(navigator,'webdriver',{get: ()=> undefined})"
+   );
+   ```
+3. **Trusted IP Range**: Add `202.7.247.92` to Salesforce Network Access
+
+**Alternative Approaches**:
+- OAuth 2.0 API login (bypass UI completely)
+- Frontdoor.jsp with session ID
+- Manual login with pause for development
+- Connected App for production automation
+
+### Understanding Casting in Selenium
+**Key Concept**: `ChromeDriver` implements multiple interfaces
+
+```java
+ChromeDriver implements WebDriver, JavascriptExecutor, TakesScreenshot, ...
+```
+
+**Why Cast Needed**:
+```java
+WebDriver driver = new ChromeDriver();  // Type is WebDriver interface
+driver.executeScript(...);              // ❌ Error: WebDriver doesn't have this method
+((JavascriptExecutor) driver).executeScript(...);  // ✅ Works: Cast to access method
+```
+
+**Analogy**: Person with multiple roles (Teacher, Driver). When introduced as "Teacher", you can't call "drive()" until you acknowledge they're also a "Driver".
+
+**Practical Solution**: Utility classes (JavaScriptUtil, ActionsUtil) do casting once, so tests stay clean.
+
+### Project Architecture Updates
+**New Files**:
+- `src/main/java/com/fsc/utils/JavaScriptUtil.java`
+- `src/main/java/com/fsc/utils/ActionsUtil.java`
+- `src/main/java/com/fsc/utils/ExtentReportManager.java`
+- `src/test/java/com/fsc/listeners/TestListener.java`
+- `docs/JAVASCRIPT_EXECUTOR_EXAMPLES.md`
+- `docs/ACTIONS_CLASS_GUIDE.md`
+- `docs/EXCEPTION_HANDLING_GUIDE.md`
+
+**Dependencies Added**:
+- Extent Reports 5.1.1
+
+**BaseTest Enhanced**:
+- Anti-detection ChromeOptions
+- Webdriver flag hiding
+- JavascriptExecutor import
+
+## Key Learnings Summary
+
+### Session 1 (Jan 12): Foundation
+✅ Java 17 setup, Maven project structure, TestNG configuration
+✅ Page Object Model, GitHub repository
+✅ Understanding dependencies and project organization
+
+### Session 2 (Jan 13): Configuration & Best Practices
+✅ ConfigReader for centralized config
+✅ Explicit waits over Thread.sleep (critical!)
+✅ ChromeOptions vs Window Handler
+✅ Code reusability concepts
+
+### Session 3 (Jan 15): Advanced Techniques & Reporting
+✅ JavascriptExecutor for Salesforce challenges
+✅ Actions class for complex interactions
+✅ Exception handling strategies
+✅ Extent Reports for test result tracking
+✅ Salesforce automation detection bypass
+✅ Understanding Java interfaces and casting
+
+## To-Do List Progress
+
+### Completed ✅
+1. ✅ Install Maven
+2. ✅ Create Maven project structure
+3. ✅ Set up TestNG configuration
+4. ✅ Implement Page Object Model
+5. ✅ Create GitHub repository
+6. ✅ Create ConfigReader utility
+7. ✅ Add Salesforce credentials to config.properties
+8. ✅ Create JavaScriptUtil for Salesforce-specific operations
+9. ✅ Create ActionsUtil for complex user interactions
+10. ✅ Set up Extent Reports for test reporting
+11. ✅ Add anti-detection options for Salesforce automation
+12. ✅ Create comprehensive documentation (5 guides)
+
+### In Progress ⏳
+13. ⏳ Configure Salesforce Trusted IP Range
+14. ⏳ Run successful tests against Salesforce instance
+
+### Future 📋
+15. Add more page objects (Home, Accounts, Contacts, Opportunities)
+16. Implement data-driven tests with TestNG DataProvider
+17. Handle Shadow DOM elements in complex scenarios
+18. Create test scenarios for Financial Services Cloud
+19. Set up parallel test execution
+20. Integrate with CI/CD pipeline
+
 ## Project Statistics
 
-- **Files Created**: 9 (+ConfigReader, +Quick Reference, +Learning Notes)
-- **Lines of Code**: ~850
-- **Dependencies**: 5 (Selenium, TestNG, WebDriverManager, SLF4J)
-- **Test Cases**: 4 (login scenarios)
-- **GitHub Commits**: 5
-- **Documentation**: 2 comprehensive guides (Learning Notes, Quick Reference)
+- **Files Created**: 17 (pages, tests, utils, listeners, docs)
+- **Lines of Code**: ~2,400+
+- **Dependencies**: 6 (Selenium, TestNG, WebDriverManager, SLF4J, Extent Reports)
+- **Test Cases**: 4 login scenarios (ready for expansion)
+- **Utility Classes**: 4 (ConfigReader, JavaScriptUtil, ActionsUtil, ExtentReportManager)
+- **Documentation Files**: 5 comprehensive guides
+- **GitHub Commits**: 8+
 
 ---
 
-*Updated: January 13, 2026*
+*Updated: January 15, 2026*

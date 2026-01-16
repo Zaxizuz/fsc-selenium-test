@@ -2,6 +2,7 @@ package com.fsc.base;
 
 import com.fsc.utils.ConfigReader;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -18,11 +19,16 @@ public class BaseTest {
         // WebDriverManager automatically handles ChromeDriver setup
         WebDriverManager.chromedriver().setup();
 
-        // Chrome options for better Salesforce compatibility
+        // Chrome options for better Salesforce compatibility and stealth options
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized");
         options.addArguments("--disable-notifications");
         options.addArguments("--disable-popup-blocking");
+
+        // Anti-detection options
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.setExperimentalOption("excludeSwitches",new String[]{"enable-automation"});
+        options.setExperimentalOption("useAutomationExtension",false);
 
         // Add headless mode if configured
         if (ConfigReader.isHeadless()) {
@@ -30,6 +36,9 @@ public class BaseTest {
         }
 
         driver = new ChromeDriver(options);
+
+        // Hide webdriver flag
+        ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator,'webdriver',{get: ()=> undefined})");
 
         // Use timeouts from config.properties
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(ConfigReader.getImplicitWait()));
