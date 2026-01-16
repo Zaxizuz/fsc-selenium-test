@@ -11,6 +11,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.fsc.pages.SalesforceLoginPage;
+import com.fsc.pages.SalesAppPage;
 import com.fsc.utils.JavaScriptUtil;
 import com.fsc.utils.ConfigReader;
 
@@ -18,12 +19,10 @@ import java.time.Duration;
 
 public class SalesAppTest extends BaseTest{
     private SalesforceLoginPage loginPage;
+    private SalesAppPage salesAppPage;
     private WebDriverWait wait;
 
     // Locators - Multiple strategies for App Launcher
-    private By appLauncherButton = By.xpath("//button[@title='App Launcher']");
-    private By searchBar = By.xpath("//input[@placeholder='Search apps and items...']");
-    private By salesAppLink = By.xpath("//a[@data-label='Sales']");
     private By appHeader = By.xpath("//h1[contains(@class, 'appName')]/span[@title='Sales']");
 
     @BeforeMethod
@@ -58,22 +57,9 @@ public class SalesAppTest extends BaseTest{
 
     @Test(priority = 1, description = "Test navigation to Sales app via App Launcher")
     public void testNavigateToSalesApp(){
-        // Click App Launcher
-
-        WebElement appLauncher = wait.until(ExpectedConditions.elementToBeClickable(appLauncherButton));
-        appLauncher.click();
-
-        // Wait for search bar and type "Sales"
-        WebElement searchBarElement = wait.until(ExpectedConditions.visibilityOfElementLocated(searchBar));
-        searchBarElement.sendKeys("Sales");
-
-        // Wait for Sales app to appear and click it
-        WebElement salesApp = wait.until(ExpectedConditions.elementToBeClickable(salesAppLink));
-        JavaScriptUtil jsUtil = new JavaScriptUtil(driver);
-        jsUtil.clickElement(salesApp);
-
-        // Wait for navigation to complete
-        wait.until(driver -> driver.getCurrentUrl().contains("lightning"));
+        
+        salesAppPage = new SalesAppPage(driver);
+        salesAppPage.navigateToSalesApp();
 
         // Assert successful access to Sales app
         String currentUrl = driver.getCurrentUrl();

@@ -604,8 +604,8 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 ## Session 4: First Test Implementation (January 16, 2026)
 
 ### SalesAppTest - Scenario 1 Complete
-- Created first test without Page Objects (Option 1 approach)
-- Implemented App Launcher navigation with manual verification pause
+- Created SalesAppPage.java (Page Object Model)
+- Refactored test to use Page Object pattern - cleaner, reusable code
 - **Key Challenge**: Finding stable locators in Salesforce Lightning
   - Avoid dynamic IDs (`input-212`) → Use `@placeholder`, `@data-label`, `@title`
   - App Launcher: `button[@title='App Launcher']`
@@ -623,10 +623,11 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 - **Failure debugged**: TimeoutException - 40 seconds not enough for manual verification + page load
 - Tests run: 7 total (4 login + 1 app launcher + 2 skipped)
 
-### Quick Fixes
+### Quick Fixes & Debugging
 - `getText()` vs `getAttribute("title")` - title attribute more reliable in Lightning (text gets truncated)
 - `getText()` takes **no parameters** (common error)
 - `assertEquals(exact)` vs `assertTrue(contains)`
+- **Chrome renderer timeout**: `getCurrentUrl()` fails when Salesforce Lightning loads heavily after verification - increase wait times
 
 ## Key Learnings Summary
 
@@ -650,11 +651,11 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 ✅ Understanding Java interfaces and casting
 
 ### Session 4 (Jan 16): Practical Test Development
-✅ First complete test (SalesAppTest - Scenario 1)
+✅ First complete test with Page Object Model (SalesAppTest + SalesAppPage)
 ✅ Stable locator strategies for Salesforce Lightning
 ✅ extends BaseTest inheritance pattern
 ✅ Test suite execution (testng.xml vs -Dtest)
-✅ Debugging TimeoutException failures
+✅ Debugging TimeoutException and Chrome renderer timeout
 ✅ getText() vs getAttribute() differences
 
 ## To-Do List Progress
@@ -675,10 +676,10 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 
 ### In Progress ⏳
 13. ⏳ Configure Salesforce Trusted IP Range (attempted, still needs verification)
-14. ✅ First test scenario completed (SalesAppTest)
 
 ### Future 📋
-15. Refactor SalesAppTest to use Page Object Model
+14. ✅ First test scenario completed (SalesAppTest with Page Object)
+15. ✅ Refactored SalesAppTest to use Page Object Model
 16. Complete remaining 5 practice scenarios
 17. Add more page objects (Home, Accounts, Contacts, Opportunities)
 18. Implement data-driven tests with TestNG DataProvider
@@ -688,14 +689,14 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 
 ## Project Statistics
 
-- **Files Created**: 18 (pages, tests, utils, listeners, docs, practice scenarios)
-- **Lines of Code**: ~2,600+
+- **Files Created**: 19 (pages, tests, utils, listeners, docs, practice scenarios)
+- **Lines of Code**: ~2,700+
 - **Dependencies**: 6 (Selenium, TestNG, WebDriverManager, SLF4J, Extent Reports)
-- **Test Cases**: 5 scenarios (4 login + 1 app launcher)
+- **Test Cases**: 5 scenarios (4 login + 1 app launcher with Page Object)
+- **Page Objects**: 2 (SalesforceLoginPage, SalesAppPage)
 - **Utility Classes**: 4 (ConfigReader, JavaScriptUtil, ActionsUtil, ExtentReportManager)
 - **Documentation Files**: 6 guides (Learning Notes, Quick Reference, JS Executor, Actions, Exception Handling, Practice Scenarios)
-- **GitHub Commits**: 9+
-- **Test Execution**: 7 tests run (4 pass, 1 fail, 2 skip)
+- **GitHub Commits**: 10+
 
 ---
 

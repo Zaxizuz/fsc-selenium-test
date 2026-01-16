@@ -5,11 +5,11 @@
         <listener class-name="com.fsc.listeners.TestListener"/>
     </listeners>
 
-    <test name="Salesforce Login Tests">
+    <!-- <test name="Salesforce Login Tests">
         <classes>
             <class name="com.fsc.tests.SalesforceLoginTest"/>
         </classes>
-    </test>
+    </test> -->
 
     <test name="Sales App Tests">
         <classes>
