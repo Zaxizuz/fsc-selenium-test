@@ -601,6 +601,33 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 - Webdriver flag hiding
 - JavascriptExecutor import
 
+## Session 4: First Test Implementation (January 16, 2026)
+
+### SalesAppTest - Scenario 1 Complete
+- Created first test without Page Objects (Option 1 approach)
+- Implemented App Launcher navigation with manual verification pause
+- **Key Challenge**: Finding stable locators in Salesforce Lightning
+  - Avoid dynamic IDs (`input-212`) → Use `@placeholder`, `@data-label`, `@title`
+  - App Launcher: `button[@title='App Launcher']`
+  - Sales app: `a[@data-label='Sales']`
+
+### Java Inheritance - extends BaseTest
+- **Why needed**: BaseTest provides driver, setUp(), tearDown()
+- **Not a snippet**: Object-oriented inheritance
+- **Rule**: Always extend BaseTest, never extend other test classes
+- Three reusability patterns: Page Objects (current), LoginHelper (production), Manual instantiation (wrong)
+
+### Test Execution & Debugging
+- `mvn test -Dtest=X` → Creates "Default suite" (ignores testng.xml)
+- `mvn test` → Uses testng.xml, runs all tests in suite
+- **Failure debugged**: TimeoutException - 40 seconds not enough for manual verification + page load
+- Tests run: 7 total (4 login + 1 app launcher + 2 skipped)
+
+### Quick Fixes
+- `getText()` vs `getAttribute("title")` - title attribute more reliable in Lightning (text gets truncated)
+- `getText()` takes **no parameters** (common error)
+- `assertEquals(exact)` vs `assertTrue(contains)`
+
 ## Key Learnings Summary
 
 ### Session 1 (Jan 12): Foundation
@@ -622,6 +649,14 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 ✅ Salesforce automation detection bypass
 ✅ Understanding Java interfaces and casting
 
+### Session 4 (Jan 16): Practical Test Development
+✅ First complete test (SalesAppTest - Scenario 1)
+✅ Stable locator strategies for Salesforce Lightning
+✅ extends BaseTest inheritance pattern
+✅ Test suite execution (testng.xml vs -Dtest)
+✅ Debugging TimeoutException failures
+✅ getText() vs getAttribute() differences
+
 ## To-Do List Progress
 
 ### Completed ✅
@@ -639,27 +674,29 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 12. ✅ Create comprehensive documentation (5 guides)
 
 ### In Progress ⏳
-13. ⏳ Configure Salesforce Trusted IP Range
-14. ⏳ Run successful tests against Salesforce instance
+13. ⏳ Configure Salesforce Trusted IP Range (attempted, still needs verification)
+14. ✅ First test scenario completed (SalesAppTest)
 
 ### Future 📋
-15. Add more page objects (Home, Accounts, Contacts, Opportunities)
-16. Implement data-driven tests with TestNG DataProvider
-17. Handle Shadow DOM elements in complex scenarios
-18. Create test scenarios for Financial Services Cloud
-19. Set up parallel test execution
-20. Integrate with CI/CD pipeline
+15. Refactor SalesAppTest to use Page Object Model
+16. Complete remaining 5 practice scenarios
+17. Add more page objects (Home, Accounts, Contacts, Opportunities)
+18. Implement data-driven tests with TestNG DataProvider
+19. Handle Shadow DOM elements in complex scenarios
+20. Set up parallel test execution
+21. Integrate with CI/CD pipeline
 
 ## Project Statistics
 
-- **Files Created**: 17 (pages, tests, utils, listeners, docs)
-- **Lines of Code**: ~2,400+
+- **Files Created**: 18 (pages, tests, utils, listeners, docs, practice scenarios)
+- **Lines of Code**: ~2,600+
 - **Dependencies**: 6 (Selenium, TestNG, WebDriverManager, SLF4J, Extent Reports)
-- **Test Cases**: 4 login scenarios (ready for expansion)
+- **Test Cases**: 5 scenarios (4 login + 1 app launcher)
 - **Utility Classes**: 4 (ConfigReader, JavaScriptUtil, ActionsUtil, ExtentReportManager)
-- **Documentation Files**: 5 comprehensive guides
-- **GitHub Commits**: 8+
+- **Documentation Files**: 6 guides (Learning Notes, Quick Reference, JS Executor, Actions, Exception Handling, Practice Scenarios)
+- **GitHub Commits**: 9+
+- **Test Execution**: 7 tests run (4 pass, 1 fail, 2 skip)
 
 ---
 
-*Updated: January 15, 2026*
+*Updated: January 16, 2026*

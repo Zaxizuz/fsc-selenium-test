@@ -10,4 +10,10 @@
             <class name="com.fsc.tests.SalesforceLoginTest"/>
         </classes>
     </test>
+
+    <test name="Sales App Tests">
+        <classes>
+            <class name="com.fsc.tests.SalesAppTest"/>
+        </classes>
+    </test>
 </suite>
