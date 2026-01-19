@@ -15,8 +15,8 @@ public class SalesAppPage {
     private WebDriver driver;
     private WebDriverWait wait;
 
-    // Locators
-    // Locators - Multiple strategies for App Launcher
+    
+    // Locators 
     private By appLauncherButton = By.xpath("//button[@title='App Launcher']");
     private By searchBar = By.xpath("//input[@placeholder='Search apps and items...']");
     private By salesAppLink = By.xpath("//a[@data-label='Sales']");
