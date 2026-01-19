@@ -20,10 +20,6 @@
 - Modern language features
 - Future-proofing (Selenium moving toward Java 17 minimum)
 
-**Sources**:
-- [Selenium Java 11 minimum requirement](https://github.com/SeleniumHQ/selenium/issues/11526)
-- [Java 17 feature discussion](https://github.com/SeleniumHQ/selenium/issues/14022)
-
 ---
 
 ### 2. Understanding Maven and Why It's Essential
@@ -385,21 +381,6 @@ gh repo view               # View repository details
 
 ## Next Steps
 
-### To Do:
-1. ✓ Install Maven
-2. ✓ Create Maven project structure
-3. ✓ Set up TestNG configuration
-4. ✓ Implement Page Object Model
-5. ✓ Create GitHub repository
-6. ⏳ Update `testng.xml` with actual test parameters
-7. ⏳ Add Salesforce credentials to `config.properties`
-8. ⏳ Run tests against actual Salesforce instance
-9. ⏳ Add more page objects (Home page, Account page, etc.)
-10. ⏳ Implement data-driven tests with TestNG DataProvider
-11. ⏳ Set up test reporting
-12. ⏳ Handle Shadow DOM elements in Salesforce
-13. ⏳ Implement framework for handling iFrames
-
 ### Learning Goals:
 - Master TestNG annotations and configuration
 - Learn advanced Selenium techniques (Shadow DOM, iFrames)
@@ -583,24 +564,6 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 
 **Practical Solution**: Utility classes (JavaScriptUtil, ActionsUtil) do casting once, so tests stay clean.
 
-### Project Architecture Updates
-**New Files**:
-- `src/main/java/com/fsc/utils/JavaScriptUtil.java`
-- `src/main/java/com/fsc/utils/ActionsUtil.java`
-- `src/main/java/com/fsc/utils/ExtentReportManager.java`
-- `src/test/java/com/fsc/listeners/TestListener.java`
-- `docs/JAVASCRIPT_EXECUTOR_EXAMPLES.md`
-- `docs/ACTIONS_CLASS_GUIDE.md`
-- `docs/EXCEPTION_HANDLING_GUIDE.md`
-
-**Dependencies Added**:
-- Extent Reports 5.1.1
-
-**BaseTest Enhanced**:
-- Anti-detection ChromeOptions
-- Webdriver flag hiding
-- JavascriptExecutor import
-
 ## Session 4: First Test Implementation (January 16, 2026)
 
 ### SalesAppTest - Scenario 1 Complete
@@ -617,65 +580,13 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 - **Rule**: Always extend BaseTest, never extend other test classes
 - Three reusability patterns: Page Objects (current), LoginHelper (production), Manual instantiation (wrong)
 
-### Test Execution & Debugging
-- `mvn test -Dtest=X` → Creates "Default suite" (ignores testng.xml)
-- `mvn test` → Uses testng.xml, runs all tests in suite
-- **Failure debugged**: TimeoutException - 40 seconds not enough for manual verification + page load
-- Tests run: 7 total (4 login + 1 app launcher + 2 skipped)
-
 ### Quick Fixes & Debugging
 - `getText()` vs `getAttribute("title")` - title attribute more reliable in Lightning (text gets truncated)
 - `getText()` takes **no parameters** (common error)
 - `assertEquals(exact)` vs `assertTrue(contains)`
 - **Chrome renderer timeout**: `getCurrentUrl()` fails when Salesforce Lightning loads heavily after verification - increase wait times
 
-## Key Learnings Summary
-
-### Session 1 (Jan 12): Foundation
-✅ Java 17 setup, Maven project structure, TestNG configuration
-✅ Page Object Model, GitHub repository
-✅ Understanding dependencies and project organization
-
-### Session 2 (Jan 13): Configuration & Best Practices
-✅ ConfigReader for centralized config
-✅ Explicit waits over Thread.sleep (critical!)
-✅ ChromeOptions vs Window Handler
-✅ Code reusability concepts
-
-### Session 3 (Jan 15): Advanced Techniques & Reporting
-✅ JavascriptExecutor for Salesforce challenges
-✅ Actions class for complex interactions
-✅ Exception handling strategies
-✅ Extent Reports for test result tracking
-✅ Salesforce automation detection bypass
-✅ Understanding Java interfaces and casting
-
-### Session 4 (Jan 16): Practical Test Development
-✅ First complete test with Page Object Model (SalesAppTest + SalesAppPage)
-✅ Stable locator strategies for Salesforce Lightning
-✅ extends BaseTest inheritance pattern
-✅ Test suite execution (testng.xml vs -Dtest)
-✅ Debugging TimeoutException and Chrome renderer timeout
-✅ getText() vs getAttribute() differences
-
 ## To-Do List Progress
-
-### Completed ✅
-1. ✅ Install Maven
-2. ✅ Create Maven project structure
-3. ✅ Set up TestNG configuration
-4. ✅ Implement Page Object Model
-5. ✅ Create GitHub repository
-6. ✅ Create ConfigReader utility
-7. ✅ Add Salesforce credentials to config.properties
-8. ✅ Create JavaScriptUtil for Salesforce-specific operations
-9. ✅ Create ActionsUtil for complex user interactions
-10. ✅ Set up Extent Reports for test reporting
-11. ✅ Add anti-detection options for Salesforce automation
-12. ✅ Create comprehensive documentation (5 guides)
-
-### In Progress ⏳
-13. ⏳ Configure Salesforce Trusted IP Range (attempted, still needs verification)
 
 ### Future 📋
 14. ✅ First test scenario completed (SalesAppTest with Page Object)
@@ -700,4 +611,4 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 
 ---
 
-*Updated: January 16, 2026*
+*Updated: January 19, 2026*
