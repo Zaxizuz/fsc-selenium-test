@@ -59,73 +59,96 @@ public void testNavigateToSalesApp() {
 
 ---
 
-### Scenario 2: Create New Account Test
+### Scenario 2: Create New Account Test ✅ IN PROGRESS (January 19, 2026)
 
 **Objective**: Practice form filling, dropdown selection, and verification
 
+**Status**: Implementation in progress - `SalesAppAccountPage.java` created
+
 **Steps**:
-1. Login and navigate to Accounts tab
-2. Click "New" button
-3. Fill in Account Name: "Test Account " + timestamp
-4. Select Account Type from dropdown: "Customer - Direct"
-5. Select Industry from dropdown: "Technology"
-6. Fill in Phone: "0412345678"
-7. Click "Save" button
-8. Wait for success toast message
-9. Verify you're on the Account detail page
-10. Verify Account Name matches what you entered
+1. ✅ Login and navigate to Accounts tab
+2. ✅ Click "New" button
+3. ✅ Fill in Account Name: "Test Account " + timestamp
+4. ✅ Select Account Type from dropdown: "Customer - Direct"
+5. ✅ Select Industry from dropdown: "Technology"
+6. ✅ Fill in Phone: "0412345678"
+7. ✅ Click "Save" button
+8. 🔄 Wait for success toast message
+9. 🔄 Verify you're on the Account detail page
+10. 🔄 Verify Account Name matches what you entered
 
-**Selenium Concepts to Practice**:
-- ✅ Handling Lightning combobox (dropdown)
+**Selenium Concepts Practiced**:
+- ✅ Handling Lightning combobox (dropdown) - **CRITICAL LEARNING**: Use `lightning-base-combobox-item[@data-value]`, NOT `Select` class!
 - ✅ Form filling
-- ✅ Dynamic waits for toast messages
-- ✅ Timestamp generation for unique data
+- ✅ Dynamic waits for toast messages - Locator: `div.slds-toast__content`
+- ✅ Timestamp generation for unique data - `System.currentTimeMillis()`
 - ✅ Assertion of saved data
-- ✅ Possible use of JavascriptExecutor for blocked clicks
+- ✅ JavascriptExecutor for blocked clicks
 
-**Page Objects to Create**:
+**Page Object Created**:
 ```
-AccountsListPage.java
-- clickNew()
-
-AccountCreatePage.java
-- enterAccountName(String name)
-- selectAccountType(String type)
-- selectIndustry(String industry)
-- enterPhone(String phone)
-- clickSave()
-
-AccountDetailPage.java
-- getAccountName()
-- verifySuccessToast()
+SalesAppAccountPage.java (Combined approach - simpler for learning)
+- createAccount()           // All-in-one method
+- getCreatedAccountName()   // Returns stored account name for verification
 ```
 
-**Locator Challenges**:
-- "New" button: Multiple buttons on page
-- Lightning combobox: Shadow DOM, dynamic IDs
-- Toast message: Disappears quickly
-- Save button: May be blocked by validation overlay
-
-**Expected Test Code**:
+**Key Locators Discovered**:
 ```java
-@Test
-public void testCreateNewAccount() {
-    String accountName = "Test Account " + System.currentTimeMillis();
+// Accounts tab
+By.xpath("//a[@title='Accounts']")
 
-    AccountsListPage accountsList = new AccountsListPage(driver);
-    accountsList.navigateToAccounts();
-    accountsList.clickNew();
+// New button
+By.xpath("//a[@title='New']")
 
-    AccountCreatePage createPage = new AccountCreatePage(driver);
-    createPage.enterAccountName(accountName);
-    createPage.selectAccountType("Customer - Direct");
-    createPage.selectIndustry("Technology");
-    createPage.enterPhone("0412345678");
-    createPage.clickSave();
+// Radio button (with parentheses for indexing!)
+By.xpath("(//span[@class='slds-radio--faux'])[3]")
 
-    AccountDetailPage detailPage = new AccountDetailPage(driver);
-    detailPage.verifySuccessToast();
-    Assert.assertEquals(detailPage.getAccountName(), accountName);
+// Lightning combobox button
+By.xpath("(//button[@class='slds-combobox__input slds-input_faux fix-slds-input_faux slds-combobox__input-value'])[2]")
+
+// Combobox option (by data-value)
+By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']")
+
+// Toast message
+By.cssSelector("div.slds-toast__content")
+```
+
+**Challenges Encountered & Solutions**:
+
+| Challenge | Solution |
+|-----------|----------|
+| Lightning dropdown not using `<select>` | Use `lightning-base-combobox-item[@data-value]` |
+| XPath indexing not working | Wrap in parentheses: `(//element)[3]` |
+| Click blocked by overlay | Use `JavaScriptUtil.clickElement()` |
+| Toast disappears quickly | Use explicit wait immediately after save |
+| Account name empty in verification | Store in instance variable, return via getter |
+
+**Actual Test Code Implemented**:
+```java
+@Test(priority = 2, description = "Test account creation")
+public void testAccountCreation(){
+    // Navigate to Sales App
+    salesAppPage = new SalesAppPage(driver);
+    salesAppPage.navigateToSalesApp();
+
+    // Create Account
+    salesAppAccountPage = new SalesAppAccountPage(driver);
+    salesAppAccountPage.createAccount();
+
+    // Verify toast message
+    String createdAccountName = salesAppAccountPage.getCreatedAccountName();
+    String toastMessage = "Account "+ createdAccountName + " was created.";
+    WebElement toastElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.cssSelector("div.slds-toast__content")));
+    Assert.assertEquals(toastElement.getText(), toastMessage);
+
+    // Verify URL contains "Account"
+    Assert.assertTrue(driver.getCurrentUrl().contains("Account"));
+
+    // Verify Account Name matches
+    WebElement accountNameElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        By.xpath("//slot[@name='primaryField']")));
+    Assert.assertEquals(accountNameElement.getText(), createdAccountName);
 }
 ```
 

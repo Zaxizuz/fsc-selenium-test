@@ -586,28 +586,248 @@ driver.executeScript(...);              // ❌ Error: WebDriver doesn't have thi
 - `assertEquals(exact)` vs `assertTrue(contains)`
 - **Chrome renderer timeout**: `getCurrentUrl()` fails when Salesforce Lightning loads heavily after verification - increase wait times
 
+## Session 5: Scenario 2 - Account Creation (January 19, 2026)
+
+### Cookie-Based MFA Bypass Attempt (Failed)
+**Goal**: Bypass Salesforce MFA verification code using session cookie injection
+
+**Approach Tried**:
+1. Created `SalesforceCookieAuth.java` utility class for cookie injection
+2. Used `frontdoor.jsp` with session ID
+3. Added `sid` and `oid` cookies
+
+**Why It Failed**:
+- Salesforce Developer Edition ties sessions to browser fingerprints
+- Session ID from browser doesn't transfer to Selenium WebDriver
+- Session binding makes cookie injection ineffective for this org
+
+**Lesson Learned**: Cookie/session injection works in some enterprise orgs with different security settings, but not in Developer Edition with default security. For development, manual MFA entry with `Thread.sleep()` is acceptable.
+
+### SalesAppAccountPage - Scenario 2 Implementation
+**Created**: `SalesAppAccountPage.java` (Page Object for Account creation)
+
+**Key Locators Learned**:
+```java
+// Accounts tab
+private By accountsTab = By.xpath("//a[@title='Accounts']");
+
+// Lightning Radio Button (with indexing!)
+private By businessRadioButton = By.xpath("(//span[@class='slds-radio--faux'])[3]");
+
+// Lightning Combobox (dropdown)
+private By typeField = By.xpath("(//button[@class='slds-combobox__input slds-input_faux fix-slds-input_faux slds-combobox__input-value'])[2]");
+
+// Lightning Combobox Option
+private By customerDirectOption = By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']");
+```
+
+### Lightning Dropdown/Combobox Handling
+**Critical Learning**: Salesforce Lightning dropdowns are NOT standard HTML `<select>` elements!
+
+**Why `Select` class doesn't work**:
+```java
+// ❌ This will throw UnexpectedTagNameException
+Select select = new Select(dropdownElement);  // Error: Element should be "select" but was "button"
+```
+
+**Correct Approach for Lightning Combobox**:
+1. Click the dropdown button to open
+2. Wait for options to appear
+3. Find option by `data-value` or `span[@title]`
+4. Click the option (may need JavaScript click)
+
+```java
+// Click to open dropdown
+WebElement typeFieldElement = wait.until(ExpectedConditions.visibilityOfElementLocated(typeField));
+typeFieldElement.click();
+
+// Select option by data-value
+WebElement optionElement = wait.until(ExpectedConditions.elementToBeClickable(
+    By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']")));
+jsUtil.clickElement(optionElement);
+```
+
+**Alternative Locator Strategies for Combobox Options**:
+```java
+// By data-value attribute
+By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']")
+
+// By span title
+By.xpath("//span[@title='Customer - Direct']")
+
+// By text content
+By.xpath("//lightning-base-combobox-item//span[text()='Customer - Direct']")
+```
+
+### XPath Indexing Gotcha
+**Problem**: `//span[@class='slds-radio--faux'][3]` doesn't work as expected
+
+**Reason**: Without parentheses, `[3]` applies to the predicate (looking for 3rd matching element within same parent), not the overall result set.
+
+**Solution**: Wrap in parentheses to index the entire result set:
+```java
+// ❌ Wrong - indexes within parent context
+By.xpath("//span[@class='slds-radio--faux'][3]")
+
+// ✅ Correct - indexes the overall result set
+By.xpath("(//span[@class='slds-radio--faux'])[3]")
+```
+
+### @BeforeMethod vs @BeforeClass
+**Key Insight**: Test execution order matters!
+
+**@BeforeMethod** (default):
+- Runs before EACH test method
+- Each test gets fresh browser state
+- Tests are independent
+- Trade-off: More setup time (login for each test)
+
+**@BeforeClass**:
+- Runs ONCE before all tests in the class
+- Tests share browser state
+- Tests can depend on each other
+- Trade-off: If test 1 fails, test 2 may also fail
+
+**For Salesforce with MFA**: `@BeforeClass` is more practical (only enter verification code once)
+
+**Using `dependsOnMethods` with @BeforeClass**:
+```java
+@Test(priority = 1)
+public void testNavigateToSalesApp() { ... }
+
+@Test(priority = 2, dependsOnMethods = "testNavigateToSalesApp")
+public void testCreateAccount() { ... }
+```
+This auto-skips test 2 if test 1 fails.
+
+### Toast Message Verification
+**Salesforce Toast Locator**:
+```java
+By.cssSelector("div.slds-toast__content")
+```
+
+**Toast Message Format**:
+```
+Account [Account Name] was created.
+```
+
+**Verification Code**:
+```java
+String expectedToast = "Account " + createdAccountName + " was created.";
+WebElement toastElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
+    By.cssSelector("div.slds-toast__content")));
+String actualToast = toastElement.getText();
+Assert.assertEquals(actualToast, expectedToast);
+```
+
+**Note**: Toast messages disappear quickly! Use explicit wait to catch them.
+
+### Storing Dynamic Test Data
+**Pattern**: Store generated data for later verification
+
+```java
+public class SalesAppAccountPage {
+    private String createdAccountName;  // Instance variable to store
+
+    public void createAccount() {
+        createdAccountName = "Test Account " + System.currentTimeMillis();
+        nameFieldElement.sendKeys(createdAccountName);
+        // ... rest of creation
+    }
+
+    public String getCreatedAccountName() {
+        return createdAccountName;  // Getter for test verification
+    }
+}
+```
+
+### JavaScript Click for Lightning Components
+**When Needed**: Lightning components often have overlays or event handlers that block regular clicks
+
+```java
+JavaScriptUtil jsUtil = new JavaScriptUtil(driver);
+
+// For Accounts tab (blocked by something)
+WebElement accountsTab = wait.until(ExpectedConditions.elementToBeClickable(accountsTab));
+jsUtil.clickElement(accountsTab);  // JavaScript click bypasses blockers
+
+// For dropdown options
+WebElement option = wait.until(ExpectedConditions.elementToBeClickable(optionLocator));
+jsUtil.clickElement(option);
+```
+
+### Current Test Structure
+```java
+@BeforeMethod
+public void login() {
+    // Initialize wait
+    // Login to Salesforce
+    // Manual MFA pause (40 seconds)
+    // Wait for login completion
+}
+
+@Test(priority = 2, description = "Test account creation")
+public void testAccountCreation() {
+    // Navigate to Sales App
+    salesAppPage = new SalesAppPage(driver);
+    salesAppPage.navigateToSalesApp();
+
+    // Create Account
+    salesAppAccountPage = new SalesAppAccountPage(driver);
+    salesAppAccountPage.createAccount();
+
+    // Verify toast message
+    // Verify URL contains "Account"
+    // Verify Account Name matches
+}
+
 ## To-Do List Progress
 
-### Future 📋
+### Completed ✅
 14. ✅ First test scenario completed (SalesAppTest with Page Object)
 15. ✅ Refactored SalesAppTest to use Page Object Model
-16. Complete remaining 5 practice scenarios
-17. Add more page objects (Home, Accounts, Contacts, Opportunities)
-18. Implement data-driven tests with TestNG DataProvider
-19. Handle Shadow DOM elements in complex scenarios
-20. Set up parallel test execution
-21. Integrate with CI/CD pipeline
+16. ✅ Scenario 2: Account Creation - `SalesAppAccountPage.java` created
+17. ✅ Learned Lightning Combobox handling (dropdown selection)
+18. ✅ Learned XPath indexing with parentheses
+19. ✅ Implemented toast message verification
+20. ✅ Attempted cookie-based MFA bypass (documented why it failed)
+
+### In Progress 🔄
+21. Complete Scenario 2 test verification (toast + account name)
+22. Debug and stabilize Account creation test
+
+### Future 📋
+23. Complete remaining 4 practice scenarios (Scenarios 3-6)
+24. Add more page objects (Contacts, Opportunities, FSC objects)
+25. Implement data-driven tests with TestNG DataProvider
+26. Handle Shadow DOM elements in complex scenarios
+27. Set up parallel test execution
+28. Integrate with CI/CD pipeline
 
 ## Project Statistics
 
-- **Files Created**: 19 (pages, tests, utils, listeners, docs, practice scenarios)
-- **Lines of Code**: ~2,700+
+- **Files Created**: 20 (pages, tests, utils, listeners, docs, practice scenarios)
+- **Lines of Code**: ~3,000+
 - **Dependencies**: 6 (Selenium, TestNG, WebDriverManager, SLF4J, Extent Reports)
-- **Test Cases**: 5 scenarios (4 login + 1 app launcher with Page Object)
-- **Page Objects**: 2 (SalesforceLoginPage, SalesAppPage)
+- **Test Cases**: 6 scenarios (4 login + 1 app launcher + 1 account creation)
+- **Page Objects**: 3 (SalesforceLoginPage, SalesAppPage, SalesAppAccountPage)
 - **Utility Classes**: 4 (ConfigReader, JavaScriptUtil, ActionsUtil, ExtentReportManager)
 - **Documentation Files**: 6 guides (Learning Notes, Quick Reference, JS Executor, Actions, Exception Handling, Practice Scenarios)
-- **GitHub Commits**: 10+
+- **GitHub Commits**: 12+
+
+---
+
+## Key Learnings Summary (January 19, 2026)
+
+| Topic | Learning |
+|-------|----------|
+| MFA Bypass | Cookie injection doesn't work on Salesforce Developer Edition |
+| Lightning Combobox | Use `lightning-base-combobox-item[@data-value]`, NOT `Select` class |
+| XPath Indexing | Use parentheses: `(//element)[3]` not `//element[3]` |
+| @BeforeMethod vs @BeforeClass | Use @BeforeClass for Salesforce to avoid multiple MFA entries |
+| Toast Messages | Locator: `div.slds-toast__content`, disappears quickly - use explicit wait |
+| Dynamic Data | Store generated data in instance variable, provide getter for verification |
+| JavaScript Click | Use for Lightning components when regular click fails |
 
 ---
 

@@ -392,22 +392,71 @@ input.clear();
 input.sendKeys("John");
 ```
 
-#### Lightning Combobox (Dropdown)
+#### Lightning Combobox (Dropdown) - CRITICAL LEARNING (January 19, 2026)
+
+**⚠️ IMPORTANT**: Lightning comboboxes are NOT standard HTML `<select>` elements! The Selenium `Select` class will NOT work!
 
 ```java
-// Method 1: Click and select by text
-// Click the combobox to open dropdown
-driver.findElement(By.xpath("//label[text()='Status']//ancestor::lightning-combobox")).click();
+// ❌ WRONG - This will throw UnexpectedTagNameException
+Select select = new Select(dropdownElement);  // ERROR: Element should be "select" but was "button"
 
-// Wait for dropdown options to appear
-wait.until(ExpectedConditions.visibilityOfElementLocated(
-    By.xpath("//span[@class='slds-media__body']")
-));
+// ✅ CORRECT - Manual click + select pattern
+```
 
-// Click the desired option
-driver.findElement(By.xpath("//span[text()='Active']")).click();
+**Step 1: Identify the combobox button**
+```java
+// Lightning combobox button (not input!)
+private By typeField = By.xpath("(//button[@class='slds-combobox__input slds-input_faux fix-slds-input_faux slds-combobox__input-value'])[2]");
+```
 
-// Method 2: Type to search and select
+**Step 2: Click to open dropdown**
+```java
+WebElement typeFieldElement = wait.until(ExpectedConditions.visibilityOfElementLocated(typeField));
+typeFieldElement.click();
+```
+
+**Step 3: Select option by data-value (RECOMMENDED)**
+```java
+// Best approach - use data-value attribute
+private By customerDirectOption = By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']");
+
+WebElement optionElement = wait.until(ExpectedConditions.elementToBeClickable(customerDirectOption));
+jsUtil.clickElement(optionElement);  // Use JavaScript click for reliability
+```
+
+**Alternative Locators for Combobox Options**:
+```java
+// By data-value (most reliable)
+By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']")
+
+// By span title
+By.xpath("//span[@title='Customer - Direct']")
+
+// By text content
+By.xpath("//lightning-base-combobox-item//span[text()='Customer - Direct']")
+
+// By partial text (if text varies)
+By.xpath("//lightning-base-combobox-item[contains(.,'Customer')]")
+```
+
+**Complete Example**:
+```java
+JavaScriptUtil jsUtil = new JavaScriptUtil(driver);
+
+// Open dropdown
+WebElement dropdown = wait.until(ExpectedConditions.visibilityOfElementLocated(
+    By.xpath("(//button[@class='slds-combobox__input slds-input_faux fix-slds-input_faux slds-combobox__input-value'])[2]")));
+dropdown.click();
+
+// Select option
+WebElement option = wait.until(ExpectedConditions.elementToBeClickable(
+    By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']")));
+jsUtil.clickElement(option);  // JavaScript click bypasses overlays
+```
+
+**Legacy Method (still works but less reliable)**:
+```java
+// Method 2: Type to search and select (for lookup-style comboboxes)
 WebElement combobox = driver.findElement(
     By.xpath("//label[text()='Account']//ancestor::lightning-combobox//input")
 );
@@ -766,4 +815,4 @@ public void highlightElement(WebElement element) {
 
 ---
 
-*Updated: January 13, 2026*
+*Updated: January 19, 2026*
