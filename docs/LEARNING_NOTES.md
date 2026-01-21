@@ -831,4 +831,247 @@ public void testAccountCreation() {
 
 ---
 
-*Updated: January 19, 2026*
+## Session 6: Scenario 3 - Account Search (January 21, 2026)
+
+### Scenario 3: Account Search Complete ✅
+**Objective**: Search for an existing account in list view and verify details
+
+**Implementation**:
+- Created `searchAccount()` method in `SalesAppAccountPage.java`
+- Select list view → Search → Click result → Verify details
+
+### Key Learnings
+
+#### 1. Handling Lightning Spinner (Loading Indicator)
+**Problem**: `ElementClickInterceptedException` - spinner overlay blocking clicks
+
+**Root Cause**: Salesforce Lightning shows spinners during AJAX operations that block interaction
+
+**Solution**: Wait for spinner to disappear before clicking:
+```java
+// Wait for spinner to disappear before clicking
+wait.until(ExpectedConditions.invisibilityOfElementLocated(
+    By.cssSelector("lightning-spinner")));
+
+// Then use JavaScript click for extra reliability
+jsUtil.clickElement(firstRecordLink);
+```
+
+**Best Practice**: Always wait for spinners after:
+- Page navigation
+- Search/filter operations
+- Save operations
+- Any AJAX request
+
+#### 2. List View Selection in Salesforce
+**Key Locators**:
+```java
+// List view dropdown button
+private By listViewButton = By.xpath("//button[@title='Select a List View: Accounts']");
+
+// List view option (text-based)
+private By allAccountOption = By.xpath("//*[text()='All Accounts']");
+
+// Search bar within list view
+private By searchBar = By.xpath("//input[@name='Account-search-input']");
+
+// First record in results
+private By firstRecord = By.xpath("//span[@data-cell-type='lstOutputLookup'][1]//a");
+```
+
+#### 3. Search with Enter Key
+**Using Keys.ENTER for search submission**:
+```java
+import org.openqa.selenium.Keys;
+
+// Enter search term and press Enter
+searchBarElement.sendKeys("Berardo" + Keys.ENTER);
+```
+
+#### 4. Account Name Verification Locator
+**Working locator for account detail page**:
+```java
+private By accountName = By.xpath(
+    "//div[@class='entityNameTitle slds-line-height--reset']/following-sibling::slot/lightning-formatted-text");
+```
+
+#### 5. Extent Report Generation
+**Critical**: Must use `testng.xml` to generate Extent Reports!
+
+**Wrong** (no report generated):
+```bash
+mvn test -Dtest=SalesAppTest
+```
+
+**Correct** (report generated):
+```bash
+mvn test -DsuiteXmlFile=src/test/resources/testng.xml
+```
+
+**Why**: `-Dtest=ClassName` bypasses `testng.xml`, so the TestListener (which generates reports) is never registered.
+
+#### 6. Page Object Initialization in @BeforeMethod
+**Refactored Approach**: Initialize page objects in `@BeforeMethod` instead of each test
+
+**Before** (in each test):
+```java
+@Test
+public void testAccountSearch() {
+    salesAppPage = new SalesAppPage(driver);
+    salesAppAccountPage = new SalesAppAccountPage(driver);
+    // ...
+}
+```
+
+**After** (in @BeforeMethod):
+```java
+@BeforeMethod
+public void login() {
+    wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+    loginPage = new SalesforceLoginPage(driver);
+    salesAppPage = new SalesAppPage(driver);
+    salesAppAccountPage = new SalesAppAccountPage(driver);
+    // Login logic...
+}
+
+@Test
+public void testAccountSearch() {
+    // Page objects already available
+    salesAppPage.navigateToSalesApp();
+    // ...
+}
+```
+
+**Benefits**:
+- Cleaner test methods
+- Page objects initialized once per test method
+- Each test still gets fresh driver (due to `@BeforeMethod` in BaseTest)
+
+### Updated Test Structure
+```java
+@BeforeMethod
+public void login(){
+    // Initialize page objects and wait
+    wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+    loginPage = new SalesforceLoginPage(driver);
+    salesAppPage = new SalesAppPage(driver);
+    salesAppAccountPage = new SalesAppAccountPage(driver);
+
+    // Login
+    loginPage.navigateToLogin(ConfigReader.getSalesforceUrl());
+    loginPage.login(username, password);
+
+    // Manual MFA pause (40 seconds)
+    Thread.sleep(40000);
+
+    // Wait for login completion
+    wait.until(driver -> driver.getCurrentUrl().contains("lightning"));
+}
+
+@Test(priority = 3, description = "Test account search")
+public void testAccountSearch(){
+    salesAppPage.navigateToSalesApp();
+    salesAppAccountPage.navigateToAccountTab();
+    salesAppAccountPage.searchAccount();
+
+    // Verify URL contains "Account"
+    Assert.assertTrue(driver.getCurrentUrl().contains("Account"));
+
+    // Verify Account Name is "Berardo"
+    WebElement accountNameElement = wait.until(
+        ExpectedConditions.visibilityOfElementLocated(accountName));
+    Assert.assertEquals(accountNameElement.getText(), "Berardo");
+}
+```
+
+### searchAccount() Method Implementation
+```java
+public void searchAccount(){
+    // Select "All Account" List view
+    WebElement listViewBtn = wait.until(ExpectedConditions.elementToBeClickable(listViewButton));
+    listViewBtn.click();
+    WebElement allAccountElement = wait.until(ExpectedConditions.elementToBeClickable(allAccountOption));
+    jsUtil.clickElement(allAccountElement);
+
+    // Enter the account name in the search bar
+    WebElement searchBarElement = wait.until(ExpectedConditions.visibilityOfElementLocated(searchBar));
+    searchBarElement.sendKeys("Berardo" + Keys.ENTER);
+
+    // Wait for spinner to disappear before clicking
+    wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("lightning-spinner")));
+
+    // Go to the first record - use JavaScript click to avoid spinner interference
+    WebElement firstRecordLink = wait.until(ExpectedConditions.elementToBeClickable(firstRecord));
+    jsUtil.clickElement(firstRecordLink);
+}
+```
+
+### Salesforce Toast Locator (Session 5 Correction)
+**Correct locator** (discovered this session):
+```java
+// ❌ Old locator (didn't work reliably)
+By.cssSelector("div.slds-toast__content")
+
+// ✅ Correct locator
+By.cssSelector("div.forceToastMessage")
+```
+
+The toast element structure:
+```html
+<div class="slds-theme--success slds-notify--toast forceToastMessage">
+```
+
+## To-Do List Progress
+
+### Completed ✅
+14. ✅ First test scenario completed (SalesAppTest with Page Object)
+15. ✅ Refactored SalesAppTest to use Page Object Model
+16. ✅ Scenario 2: Account Creation - `SalesAppAccountPage.java` created
+17. ✅ Learned Lightning Combobox handling (dropdown selection)
+18. ✅ Learned XPath indexing with parentheses
+19. ✅ Implemented toast message verification
+20. ✅ Attempted cookie-based MFA bypass (documented why it failed)
+21. ✅ **Scenario 3: Account Search** - Complete with spinner handling
+22. ✅ Learned spinner wait pattern for Lightning UI
+23. ✅ Learned Extent Report generation requires testng.xml
+24. ✅ Refactored page object initialization to @BeforeMethod
+
+### In Progress 🔄
+25. Revisit Scenario 2 account name verification (locator needs refinement)
+
+### Future 📋
+26. Complete remaining 3 FSC scenarios (Scenarios 4-6)
+27. Add more page objects (Contacts, Opportunities, FSC objects)
+28. Implement data-driven tests with TestNG DataProvider
+29. Handle Shadow DOM elements in complex scenarios
+30. Set up parallel test execution
+31. Integrate with CI/CD pipeline
+
+## Project Statistics
+
+- **Files Created**: 22 (pages, tests, utils, listeners, docs, practice scenarios)
+- **Lines of Code**: ~3,500+
+- **Dependencies**: 6 (Selenium, TestNG, WebDriverManager, SLF4J, Extent Reports)
+- **Test Cases**: 6 scenarios (4 login + 1 app launcher + 1 account creation + 1 account search)
+- **Page Objects**: 3 (SalesforceLoginPage, SalesAppPage, SalesAppAccountPage)
+- **Utility Classes**: 4 (ConfigReader, JavaScriptUtil, ActionsUtil, ExtentReportManager)
+- **Documentation Files**: 6 guides
+- **GitHub Commits**: 14+
+
+---
+
+## Key Learnings Summary (January 21, 2026)
+
+| Topic | Learning |
+|-------|----------|
+| Spinner Handling | Wait for `invisibilityOfElementLocated(By.cssSelector("lightning-spinner"))` |
+| List View Selection | Use text-based XPath: `//*[text()='All Accounts']` |
+| Search Submit | Use `Keys.ENTER`: `searchBar.sendKeys("term" + Keys.ENTER)` |
+| Toast Locator | Use `div.forceToastMessage` (not `div.slds-toast__content`) |
+| Extent Reports | Must use `mvn test -DsuiteXmlFile=testng.xml` for reports |
+| Page Object Init | Initialize in `@BeforeMethod` for cleaner test code |
+| JavaScript Click | Use for elements blocked by overlays/spinners |
+
+---
+
+*Updated: January 21, 2026*

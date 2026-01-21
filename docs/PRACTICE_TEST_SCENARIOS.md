@@ -109,8 +109,8 @@ By.xpath("(//button[@class='slds-combobox__input slds-input_faux fix-slds-input_
 // Combobox option (by data-value)
 By.xpath("//lightning-base-combobox-item[@data-value='Customer - Direct']")
 
-// Toast message
-By.cssSelector("div.slds-toast__content")
+// Toast message (CORRECTED - use forceToastMessage)
+By.cssSelector("div.forceToastMessage")
 ```
 
 **Challenges Encountered & Solutions**:
@@ -154,61 +154,99 @@ public void testAccountCreation(){
 
 ---
 
-### Scenario 3: List View Search and Filter Test
+### Scenario 3: List View Search and Filter Test ✅ COMPLETE (January 21, 2026)
 
 **Objective**: Practice searching, filtering, and table interaction
 
+**Status**: ✅ Complete - Test passes successfully
+
 **Steps**:
-1. Login and navigate to Accounts tab
-2. Wait for the list view to load
-3. Click the search box
-4. Enter search term: "Burlington"
-5. Wait for search results to filter
-6. Verify at least one result contains "Burlington"
-7. Click on the first result
-8. Verify you're on the Account detail page
-9. Verify the Account Name contains "Burlington"
+1. ✅ Login and navigate to Accounts tab
+2. ✅ Select "All Accounts" list view
+3. ✅ Enter search term in search box: "Berardo"
+4. ✅ Press Enter to submit search
+5. ✅ Wait for spinner to disappear (CRITICAL!)
+6. ✅ Click on the first result
+7. ✅ Verify you're on the Account detail page
+8. ✅ Verify the Account Name is "Berardo"
 
-**Selenium Concepts to Practice**:
-- ✅ Search functionality
-- ✅ Dynamic table handling
-- ✅ Waiting for AJAX/search results
-- ✅ XPath for table rows
-- ✅ Text verification in tables
+**Selenium Concepts Practiced**:
+- ✅ List view dropdown selection
+- ✅ Search functionality with `Keys.ENTER`
+- ✅ **Spinner wait handling** - CRITICAL for Salesforce Lightning
+- ✅ JavaScript click for overlay-blocked elements
+- ✅ Text verification on detail page
 
-**Page Objects to Create**:
-```
-AccountsListPage.java
-- searchAccounts(String searchTerm)
-- getSearchResults()
-- clickFirstResult()
-- verifyResultContains(String text)
-```
-
-**Locator Challenges**:
-- Search box: May be scoped to list view
-- Table results: Dynamic rows, lazy loading
-- First result link: Nested structure
-
-**Expected Test Code**:
+**Implementation Added to `SalesAppAccountPage.java`**:
 ```java
-@Test
-public void testSearchAccountsByName() {
-    AccountsListPage accountsList = new AccountsListPage(driver);
-    accountsList.navigateToAccounts();
-    accountsList.searchAccounts("Burlington");
+// Key Locators
+private By searchBar = By.xpath("//input[@name='Account-search-input']");
+private By listViewButton = By.xpath("//button[@title='Select a List View: Accounts']");
+private By allAccountOption = By.xpath("//*[text()='All Accounts']");
+private By firstRecord = By.xpath("//span[@data-cell-type='lstOutputLookup'][1]//a");
 
-    // Wait for results
-    wait.until(driver -> accountsList.getSearchResults().size() > 0);
+public void searchAccount(){
+    // Select "All Accounts" List view
+    WebElement listViewBtn = wait.until(ExpectedConditions.elementToBeClickable(listViewButton));
+    listViewBtn.click();
+    WebElement allAccountElement = wait.until(ExpectedConditions.elementToBeClickable(allAccountOption));
+    jsUtil.clickElement(allAccountElement);
 
-    accountsList.verifyResultContains("Burlington");
-    accountsList.clickFirstResult();
+    // Enter the account name in the search bar
+    WebElement searchBarElement = wait.until(ExpectedConditions.visibilityOfElementLocated(searchBar));
+    searchBarElement.sendKeys("Berardo" + Keys.ENTER);
 
-    AccountDetailPage detailPage = new AccountDetailPage(driver);
-    String accountName = detailPage.getAccountName();
-    Assert.assertTrue(accountName.contains("Burlington"));
+    // Wait for spinner to disappear before clicking
+    wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("lightning-spinner")));
+
+    // Go to the first record - use JavaScript click to avoid spinner interference
+    WebElement firstRecordLink = wait.until(ExpectedConditions.elementToBeClickable(firstRecord));
+    jsUtil.clickElement(firstRecordLink);
 }
 ```
+
+**Actual Test Code Implemented**:
+```java
+@Test(priority = 3, description = "Test account search")
+public void testAccountSearch(){
+    salesAppPage.navigateToSalesApp();
+    salesAppAccountPage.navigateToAccountTab();
+    salesAppAccountPage.searchAccount();
+
+    // Verify you're on the Account detail page
+    String currentUrl = driver.getCurrentUrl();
+    Assert.assertTrue(currentUrl.contains("Account"),
+        "Failed - URL does not contain 'Account'. Current URL: " + currentUrl);
+
+    // Verify Account Name is Berardo
+    WebElement accountNameElement = wait.until(ExpectedConditions.visibilityOfElementLocated(accountName));
+    String accountNameText = accountNameElement.getText();
+    Assert.assertEquals(accountNameText, "Berardo",
+        "Failed - Account Name is not correct. Actual text: " + accountNameText);
+}
+```
+
+**Challenges Encountered & Solutions**:
+
+| Challenge | Solution |
+|-----------|----------|
+| List view dropdown selection | Use text-based XPath: `//*[text()='All Accounts']` |
+| `ElementClickInterceptedException` (spinner blocking) | Wait for spinner: `invisibilityOfElementLocated(By.cssSelector("lightning-spinner"))` |
+| First record click blocked | Use `jsUtil.clickElement()` (JavaScript click) |
+| Search submission | Use `Keys.ENTER` instead of clicking a button |
+
+**Key Learning - Spinner Handling Pattern**:
+```java
+// ALWAYS wait for spinner after any operation that triggers AJAX
+wait.until(ExpectedConditions.invisibilityOfElementLocated(
+    By.cssSelector("lightning-spinner")));
+```
+
+**Extent Report Note**: To generate reports, MUST use:
+```bash
+mvn test -DsuiteXmlFile=src/test/resources/testng.xml
+```
+NOT `mvn test -Dtest=SalesAppTest` (bypasses TestListener)
 
 ---
 
@@ -494,3 +532,4 @@ After completing these scenarios, you should be able to:
 ---
 
 *Created: January 15, 2026*
+*Updated: January 21, 2026* - Scenario 3 complete, toast locator corrected
