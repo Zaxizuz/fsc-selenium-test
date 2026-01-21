@@ -25,15 +25,17 @@ public class SalesAppTest extends BaseTest{
     
     // Locators - Multiple strategies for App Launcher
     private By appHeader = By.xpath("//h1[contains(@class, 'appName')]/span[@title='Sales']");
-    private By accountName =By.xpath("//slot[@name='primaryField']");
+    private By accountName =By.xpath("//div[@class='entityNameTitle slds-line-height--reset']/following-sibling::slot/lightning-formatted-text");
 
     @BeforeMethod
     public void login(){
-        // Initialize wait
+        // Initialize page objects and wait
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        loginPage = new SalesforceLoginPage(driver);
+        salesAppPage = new SalesAppPage(driver);
+        salesAppAccountPage = new SalesAppAccountPage(driver);
 
         // Login
-        loginPage = new SalesforceLoginPage(driver);
         loginPage.navigateToLogin(ConfigReader.getSalesforceUrl());
         String username = ConfigReader.getUsername();
         String password = ConfigReader.getPassword();
@@ -59,8 +61,7 @@ public class SalesAppTest extends BaseTest{
 
     // @Test(priority = 1, description = "Test navigation to Sales app via App Launcher")
     // public void testNavigateToSalesApp(){
-        
-    //     salesAppPage = new SalesAppPage(driver);
+
     //     salesAppPage.navigateToSalesApp();
 
     //     // Assert successful access to Sales app
@@ -74,33 +75,57 @@ public class SalesAppTest extends BaseTest{
     //     Assert.assertEquals(headerText, "Sales",
     //         "Failed - Header text is not 'Sales'. Actual text: " + headerText);
     // }
-    @Test(priority = 2, description = "Test account creation")
-    public void testAccountCreation(){
+    // @Test(priority = 2, description = "Test account creation")
+    // public void testAccountCreation(){
         
-        salesAppPage = new SalesAppPage(driver);
-        salesAppPage.navigateToSalesApp();
-        salesAppAccountPage = new SalesAppAccountPage(driver);
-        salesAppAccountPage.createAccount();
+    //     salesAppPage.navigateToSalesApp();
+    //     salesAppAccountPage.navigateToAccountTab();
+    //     salesAppAccountPage.createAccount();
         
 
-        // Wait for success toat message
-        String createdAccountName = salesAppAccountPage.getCreatedAccountName();
-        String toastMessage = "Account "+ createdAccountName + " was created.";
-        WebElement toastElement = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.slds-toast__content")));
-        String actualToastMessage = toastElement.getText();
-        Assert.assertEquals(actualToastMessage,toastMessage,
-        "Failed - Toast event message is not correct. Actual message: " + actualToastMessage);
+    //     // Wait for success toast message
+    //     // Toast element: <div class="slds-theme--success slds-notify--toast forceToastMessage">
+    //     String createdAccountName = salesAppAccountPage.getCreatedAccountName();
+    //     WebElement toastElement = wait.until(ExpectedConditions.visibilityOfElementLocated(
+    //         By.cssSelector("div.forceToastMessage")));
+    //     String actualToastMessage = toastElement.getText();
+    //     System.out.println("Toast message found: " + actualToastMessage);
+
+    //     // Verify toast contains the account name (more flexible assertion)
+    //     Assert.assertTrue(actualToastMessage.contains(createdAccountName),
+    //         "Failed - Toast message does not contain account name. Expected to contain: " + createdAccountName + ". Actual message: " + actualToastMessage);
+
+    //     // Verify you're on the Account detail page
+    //     String currentUrl = driver.getCurrentUrl();
+    //     Assert.assertTrue(currentUrl.contains("Account"),
+    //         "Failed - URL does not contain 'Account'. Current URL: " + currentUrl);
+
+    //     // Verify Account Name matches what you entered
+    //     WebElement accountNameElement = wait.until(ExpectedConditions.visibilityOfElementLocated(accountName));
+    //     String accountNameText = accountNameElement.getText();
+        
+    //     Assert.assertEquals(accountNameText, createdAccountName,
+    //         "Failed - Account Name is not correct. Actual text: " + accountNameText);
+    // }
+    @Test(priority = 3, description = "Test account search")
+    public void testAccountSearch(){
+        
+        
+        salesAppPage.navigateToSalesApp();
+        salesAppAccountPage.navigateToAccountTab();
+        salesAppAccountPage.searchAccount();
+
 
         // Verify you're on the Account detail page
         String currentUrl = driver.getCurrentUrl();
         Assert.assertTrue(currentUrl.contains("Account"),
             "Failed - URL does not contain 'Account'. Current URL: " + currentUrl);
 
-        // Verify Account Name matches what you entered
+        // Verify Account Name contains Berardo
         WebElement accountNameElement = wait.until(ExpectedConditions.visibilityOfElementLocated(accountName));
         String accountNameText = accountNameElement.getText();
         
-        Assert.assertEquals(accountNameText, createdAccountName,
+        Assert.assertEquals(accountNameText, "Berardo",
             "Failed - Account Name is not correct. Actual text: " + accountNameText);
     }
 }

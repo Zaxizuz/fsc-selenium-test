@@ -5,8 +5,11 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.Keys;
 
 import com.fsc.utils.JavaScriptUtil;
+
 
 import java.time.Duration;
 
@@ -14,6 +17,8 @@ import java.time.Duration;
 public class SalesAppAccountPage {
     private WebDriver driver;
     private WebDriverWait wait;
+    private JavaScriptUtil jsUtil;
+    private Actions actionsUtil;
 
     // Locators
     private By accountsTab = By.xpath("//a[@title='Accounts']");
@@ -27,21 +32,46 @@ public class SalesAppAccountPage {
     private By technologyOption=By.xpath("//lightning-base-combobox-item[@data-value='Technology']");
     private By phoneField=By.xpath("//input[@name='Phone']");
     private By saveButton=By.xpath("//button[@name='SaveEdit']");
+    private By searchBar=By.xpath("//input[@name='Account-search-input']");
+    private By listViewButton=By.xpath("//button[@title='Select a List View: Accounts']");
+    private By allAccountOption=By.xpath("//*[text()='All Accounts']");
+    private By firstRecord=By.xpath("//span[@data-cell-type='lstOutputLookup'][1]//a");
     private String createdAccountName;
 
     public SalesAppAccountPage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        jsUtil = new JavaScriptUtil(driver);
+        actionsUtil = new Actions(driver);
     }
 
-    public void createAccount() {
-        
-        JavaScriptUtil jsUtil = new JavaScriptUtil(driver);
-        
+    public void navigateToAccountTab(){
         // Click Accounts tab
         WebElement accountsTabelement = wait.until(ExpectedConditions.elementToBeClickable(accountsTab));
         jsUtil.clickElement(accountsTabelement);
+    }
+    public void searchAccount(){
+        // Select "All Account" List view
+        WebElement accountsTabelement = wait.until(ExpectedConditions.elementToBeClickable(listViewButton));
+        accountsTabelement.click();
+        WebElement allAccountElement = wait.until(ExpectedConditions.elementToBeClickable(allAccountOption));
+        jsUtil.clickElement(allAccountElement);
         
+        // Enter the account name in the search bar
+        WebElement searchBarElement = wait.until(ExpectedConditions.visibilityOfElementLocated(searchBar));
+        searchBarElement.sendKeys("Berardo" + Keys.ENTER);
+
+        // Wait for spinner to disappear before clicking
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("lightning-spinner")));
+
+        // Go to the first record - use JavaScript click to avoid spinner interference
+        WebElement firstRecordLink = wait.until(ExpectedConditions.elementToBeClickable(firstRecord));
+        jsUtil.clickElement(firstRecordLink);
+    
+    }
+
+    public void createAccount() {
+
         // Click "New" button
         WebElement newButtonElement = wait.until(ExpectedConditions.visibilityOfElementLocated(newButton));
         newButtonElement.click();
